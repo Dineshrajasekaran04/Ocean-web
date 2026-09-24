@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Ocean Cleanup</title>
+<style>
+  :root{
+    --sea-top:#0a3d62;
+    --sea-bottom:#012a4a;
+    --accent:#38d9a9;
+    --accent2:#ffd43b;
+    --danger:#ff6b6b;
+    --panel:rgba(255,255,255,0.08);
+    --text:#eafaf6;
+  }
+  *{box-sizing:border-box;}
+  html,body{
+    height:100%;
+    margin:0;
+    background:#012a4a;
+    font-family:'Segoe UI',Verdana,sans-serif;
+    color:var(--text);
+    overflow:hidden;
+    padding-top:env(safe-area-inset-top,0px);
+    padding-bottom:env(safe-area-inset-bottom,0px);
+  }
+  #wrap{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:flex-start;
+    height:100%;
+    padding:10px;
+  }
+  h1{
+    margin:4px 0 8px;
+    font-size:clamp(20px,4vw,32px);
+    letter-spacing:1px;
+    color:var(--accent);
+    text-shadow:0 0 12px rgba(56,217,169,0.5);
+  }
+  #hud{
+    display:flex;
+    gap:14px;
+    flex-wrap:wrap;
+    justify-content:center;
+    background:var(--panel);
+    padding:8px 16px;
+    border-radius:12px;
+    margin-bottom:8px;
+    font-size:clamp(13px,2vw,16px);
+    backdrop-filter:blur(4px);
+  }
+  .hud-item{display:flex;gap:6px;align-items:center;}
+  .hud-label{opacity:0.75;}
+  #gameArea{
+    position:relative;
+    width:min(96vw,900px);
+    max-width:900px;
+    aspect-ratio:16/9;
+    border-radius:16px;
+    overflow:hidden;
+    box-shadow:0 10px 40px rgba(0,0,0,0.5), inset 0 0 0 2px rgba(255,255,255,0.08);
+    background:linear-gradient(var(--sea-top),var(--sea-bottom));
+    touch-action:none;
+  }
+  canvas{
+    display:block;
+    width:100%;
+    height:100%;
+  }
+  #overlay{
+    position:absolute;
+    inset:0;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+    background:rgba(1,20,35,0.85);
+    padding:20px;
+    gap:14px;
+  }
+  #overlay.hidden{display:none;}
+  #overlay h2{margin:0;color:var(--accent2);font-size:clamp(20px,4vw,30px);}
+  #overlay p{margin:0;max-width:520px;line-height:1.5;font-size:clamp(13px,2vw,15px);opacity:0.9;}
+  button{
+    font-family:inherit;
+    font-size:clamp(14px,2vw,17px);
+    font-weight:600;
+    padding:10px 26px;
+    border-radius:30px;
+    border:none;
+    cursor:pointer;
+    background:linear-gradient(135deg,var(--accent),#2b9e88);
+    color:#012a4a;
+    transition:transform .15s ease, box-shadow .15s ease;
+  }
+  button:hover{transform:translateY(-2px);box-shadow:0 6px 16px rgba(56,217,169,0.4);}
+  button:active{transform:translateY(0);}
+  #legend{
+    display:flex;
+    gap:16px;
+    flex-wrap:wrap;
+    justify-content:center;
+    margin-top:10px;
+    font-size:clamp(11px,1.8vw,13px);
+    opacity:0.85;
+  }
+  .legend-item{display:flex;align-items:center;gap:6px;}
+  .swatch{width:14px;height:14px;border-radius:4px;display:inline-block;}
+  #controlsHint{
+    margin-top:6px;
+    font-size:clamp(11px,1.8vw,13px);
+    opacity:0.6;
+    text-align:center;
+  }
+  #factBanner{
+    position:absolute;
+    top:10px;
+    left:50%;
+    transform:translateX(-50%);
+    background:rgba(1,20,35,0.75);
+    padding:6px 14px;
+    border-radius:20px;
+    font-size:clamp(11px,1.8vw,13px);
+    max-width:80%;
+    text-align:center;
+    opacity:0;
+    transition:opacity .4s ease;
+    pointer-events:none;
+  }
+  #factBanner.show{opacity:1;}
+</style>
+</head>
+<body>
+<div id="wrap">
+  <h1>🌊 Ocean Cleanup</h1>
+  <div id="hud">
+    <div class="hud-item"><span class="hud-label">Score</span><span id="scoreVal">0</span></div>
+    <div class="hud-item"><span class="hud-label">Time</span><span id="timeVal">60</span>s</div>
+    <div class="hud-item"><span class="hud-label">Lives</span><span id="livesVal">❤️❤️❤️</span></div>
+    <div class="hud-item"><span class="hud-label">Level</span><span id="levelVal">1</span></div>
+  </div>
+
+  <div id="gameArea">
+    <canvas id="game"></canvas>
+    <div id="factBanner"></div>
+    <div id="overlay">
+      <h2 id="overlayTitle">Ocean Cleanup</h2>
+      <p id="overlayText">
+        Guide your cleanup boat to collect floating trash before it sinks or drifts away.
+        Avoid sea turtles and fish — bumping marine life costs a life! Clear enough trash
+        each level to advance. Every 60 seconds unlocks a fact about ocean pollution.
+      </p>
+      <button id="startBtn">Start Cleaning</button>
+    </div>
+  </div>
+
+  <div id="legend">
+    <div class="legend-item"><span class="swatch" style="background:#8d6e63;border-radius:2px;"></span>Bottle / Trash (+10)</div>
+    <div class="legend-item"><span class="swatch" style="background:#ff922b;border-radius:2px;"></span>Bag / Net (+15, faster)</div>
+    <div class="legend-item"><span class="swatch" style="background:#69db7c;border-radius:50%;"></span>Turtle (avoid!)</div>
+    <div class="legend-item"><span class="swatch" style="background:#4dabf7;border-radius:50%;"></span>Fish (avoid!)</div>
+  </div>
+  <div id="controlsHint">Move: Arrow keys / A-D / drag with mouse or finger &nbsp;•&nbsp; Pause: P</div>
+</div>
+
+<script>
+(function(){
+  const canvas = document.getElementById('game');
+  const ctx = canvas.getContext('2d');
+  const gameArea = document.getElementById('gameArea');
+  const overlay = document.getElementById('overlay');
+  const overlayTitle = document.getElementById('overlayTitle');
+  const overlayText = document.getElementById('overlayText');
+  const startBtn = document.getElementById('startBtn');
+  const scoreVal = document.getElementById('scoreVal');
+  const timeVal = document.getElementById('timeVal');
+  const livesVal = document.getElementById('livesVal');
+  const levelVal = document.getElementById('levelVal');
+  const factBanner = document.getElementById('factBanner');
+
+  let W = 900, H = 506; // 16:9 baseline, rescaled via CSS
+  function resize(){
+    const rect = gameArea.getBoundingClientRect();
+    W = rect.width; H = rect.height;
+    canvas.width = W * devicePixelRatio;
+    canvas.height = H * devicePixelRatio;
+    ctx.setTransform(devicePixelRatio,0,0,devicePixelRatio,0,0);
+  }
+  window.addEventListener('resize', resize);
+  resize();
+
+  const FACTS = [
+    "Over 8 million tons of plastic enter our oceans every year.",
+    "Sea turtles often mistake plastic bags for jellyfish.",
+    "By 2050, oceans could contain more plastic than fish by weight.",
+    "A plastic bottle can take up to 450 years to decompose.",
+    "Microplastics have been found in nearly every marine species studied.",
+    "Cleaning beaches and waterways is one of the most effective ways to stop ocean plastic.",
+  ];
+  let factIndex = 0;
+
+  function showFact(){
+    factBanner.textContent = "💡 " + FACTS[factIndex % FACTS.length];
+    factIndex++;
+    factBanner.classList.add('show');
+    setTimeout(()=>factBanner.classList.remove('show'), 3500);
+  }
+
+  // ---- Game state ----
+  let state = 'idle'; // idle, playing, paused, gameover, levelup
+  let score = 0;
+  let lives = 3;
+  let level = 1;
+  let timeLeft = 60;
+  let trashCollectedThisLevel = 0;
+  let trashNeeded = 8;
+  let lastFactTime = 0;
+
+  const boat = { x: 0.5, y: 0.85, w: 70, h: 40, speed: 0.012 };
+
+  let items = []; // trash + hazards
+  let keys = {};
+  let dragTargetX = null;
+
+  function resetGame(){
+    score = 0; lives = 3; level = 1; timeLeft = 60;
+    trashCollectedThisLevel = 0; trashNeeded = 8;
+    items = [];
+    boat.x = 0.5;
+    updateHUD();
+  }
+
+  function updateHUD(){
+    scoreVal.textContent = score;
+    timeVal.textContent = Math.max(0, Math.ceil(timeLeft));
+    livesVal.textContent = '❤️'.repeat(Math.max(0,lives)) + '🖤'.repeat(Math.max(0,3-lives));
+    levelVal.textContent = level;
+  }
+
+  function spawnItem(){
+    const roll = Math.random();
+    let type;
+    if(roll < 0.42) type = 'bottle';
+    else if(roll < 0.68) type = 'bag';
+    else if(roll < 0.86) type = 'fish';
+    else type = 'turtle';
+
+    const baseSpeed = 0.09 + level*0.012;
+    items.push({
+      type,
+      x: 0.05 + Math.random()*0.9,
+      y: -0.08,
+      vy: (type==='bag' ? baseSpeed*1.4 : type==='fish' ? baseSpeed*1.6 : type==='turtle' ? baseSpeed*1.1 : baseSpeed),
+      size: type==='turtle' ? 0.07 : type==='fish' ? 0.055 : 0.05,
+      wob: Math.random()*Math.PI*2,
+      caught:false
+    });
+  }
+
+  let spawnTimer = 0;
+  let spawnInterval = 55; // frames
+
+  function update(dt, framesElapsed){
+    if(state !== 'playing') return;
+
+    timeLeft -= dt;
+    lastFactTime += dt;
+    if(lastFactTime >= 20){ lastFactTime = 0; showFact(); }
+
+    if(timeLeft <= 0){
+      endGame(trashCollectedThisLevel >= trashNeeded);
+      return;
+    }
+
+    // movement
+    let dir = 0;
+    if(keys['ArrowLeft']||keys['a']||keys['A']) dir -= 1;
+    if(keys['ArrowRight']||keys['d']||keys['D']) dir += 1;
+    if(dragTargetX !== null){
+      const diff = dragTargetX - boat.x;
+      dir = Math.max(-1, Math.min(1, diff*10));
+    }
+    boat.x += dir * boat.speed;
+    boat.x = Math.max(0.04, Math.min(0.96, boat.x));
+
+    // spawn
+    spawnTimer += 1;
+    const interval = Math.max(22, spawnInterval - level*3);
+    if(spawnTimer > interval){
+      spawnTimer = 0;
+      spawnItem();
+    }
+
+    // update items
+    for(const it of items){
+      it.y += it.vy * dt;
+      it.wob += dt*2;
+      it.x += Math.sin(it.wob)*0.0009;
+    }
+
+    // collision
+    const boatBox = {
+      x: boat.x - (boat.w/W)/2 * (W/W), // will compute in px below
+    };
+    const boatPxW = 74, boatPxH = 40;
+    const boatPxX = boat.x*W - boatPxW/2;
+    const boatPxY = boat.y*H - boatPxH/2;
+
+    for(const it of items){
+      if(it.caught) continue;
+      const s = it.size*Math.min(W,H);
+      const ix = it.x*W - s/2;
+      const iy = it.y*H - s/2;
+      const overlap = !(ix > boatPxX+boatPxW || ix+s < boatPxX || iy > boatPxY+boatPxH || iy+s < boatPxY);
+      if(overlap){
+        it.caught = true;
+        if(it.type === 'bottle'){ score += 10; trashCollectedThisLevel++; spawnPop(it.x,it.y,'#8d6e63','+10'); }
+        else if(it.type === 'bag'){ score += 15; trashCollectedThisLevel++; spawnPop(it.x,it.y,'#ff922b','+15'); }
+        else { // hazard
+          lives -= 1;
+          spawnPop(it.x,it.y,'#ff6b6b','-1 ❤');
+          if(lives <= 0){ endGame(false); return; }
+        }
+      }
+    }
+
+    items = items.filter(it => !it.caught && it.y < 1.15);
+
+    // level complete
+    if(trashCollectedThisLevel >= trashNeeded){
+      levelUp();
+      return;
+    }
+
+    updatePops(dt);
+    updateHUD();
+  }
+
+  // floating score popups
+  let pops = [];
+  function spawnPop(x,y,color,text){
+    pops.push({x,y,color,text,life:1});
+  }
+  function updatePops(dt){
+    for(const p of pops) p.life -= dt*0.9;
+    pops = pops.filter(p=>p.life>0);
+  }
+
+  function levelUp(){
+    state = 'levelup';
+    level += 1;
+    trashCollectedThisLevel = 0;
+    trashNeeded = 8 + level*2;
+    timeLeft = Math.min(75, 60 + level*4);
+    items = [];
+    updateHUD();
+    overlayTitle.textContent = `Level ${level}!`;
+    overlayText.textContent = `Great work! Ocean getting cleaner. Collect ${trashNeeded} pieces of trash before time runs out. Watch out — hazards move faster now!`;
+    startBtn.textContent = 'Continue';
+    overlay.classList.remove('hidden');
+  }
+
+  function endGame(won){
+    state = 'gameover';
+    overlayTitle.textContent = won ? '🎉 Ocean Saved (for now)!' : '💔 Game Over';
+    overlayText.textContent = won
+      ? `You scored ${score} points and reached level ${level}. Every piece of trash removed makes a real difference — try to beat your score!`
+      : `You scored ${score} points and reached level ${level}. The ocean needs you — give it another go!`;
+    startBtn.textContent = 'Play Again';
+    overlay.classList.remove('hidden');
+  }
+
+  // ---- Drawing ----
+  function drawWater(t){
+    const grad = ctx.createLinearGradient(0,0,0,H);
+    grad.addColorStop(0,'#0a3d62');
+    grad.addColorStop(1,'#012a4a');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0,0,W,H);
+
+    ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+    ctx.lineWidth = 2;
+    for(let i=0;i<4;i++){
+      ctx.beginPath();
+      const yy = (H/5)*(i+1);
+      for(let x=0;x<=W;x+=14){
+        const yOff = Math.sin(x*0.02 + t*1.5 + i)* 4;
+        if(x===0) ctx.moveTo(x, yy+yOff); else ctx.lineTo(x, yy+yOff);
+      }
+      ctx.stroke();
+    }
+  }
+
+  function drawBoat(){
+    const bx = boat.x*W, by = boat.y*H;
+    ctx.save();
+    ctx.translate(bx,by);
+    // hull
+    ctx.fillStyle = '#ffd43b';
+    ctx.beginPath();
+    ctx.moveTo(-37,0);
+    ctx.quadraticCurveTo(-37,18,0,20);
+    ctx.quadraticCurveTo(37,18,37,0);
+    ctx.lineTo(-37,0);
+    ctx.fill();
+    // cabin
+    ctx.fillStyle = '#eafaf6';
+    ctx.fillRect(-14,-18,28,18);
+    ctx.fillStyle = '#012a4a';
+    ctx.fillRect(-8,-13,7,7);
+    ctx.fillRect(2,-13,7,7);
+    // net
+    ctx.strokeStyle = 'rgba(255,255,255,0.6)';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(-30,4); ctx.lineTo(-38,22);
+    ctx.moveTo(30,4); ctx.lineTo(38,22);
+    ctx.moveTo(-38,22); ctx.quadraticCurveTo(0,34,38,22);
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  function drawItem(it){
+    const s = it.size*Math.min(W,H);
+    const x = it.x*W, y = it.y*H;
+    ctx.save();
+    ctx.translate(x,y);
+    if(it.type === 'bottle'){
+      ctx.fillStyle = '#8d6e63';
+      ctx.fillRect(-s*0.18, -s*0.5, s*0.36, s);
+      ctx.fillStyle = '#a1887f';
+      ctx.fillRect(-s*0.1, -s*0.6, s*0.2, s*0.15);
+    } else if(it.type === 'bag'){
+      ctx.fillStyle = '#ff922b';
+      ctx.beginPath();
+      ctx.ellipse(0,0,s*0.5,s*0.4,0,0,Math.PI*2);
+      ctx.fill();
+      ctx.strokeStyle='#fff3bf';
+      ctx.lineWidth=2;
+      ctx.beginPath();
+      ctx.moveTo(-s*0.2,-s*0.35); ctx.lineTo(-s*0.1,-s*0.5);
+      ctx.moveTo(s*0.2,-s*0.35); ctx.lineTo(s*0.1,-s*0.5);
+      ctx.stroke();
+    } else if(it.type === 'fish'){
+      ctx.fillStyle = '#4dabf7';
+      ctx.beginPath();
+      ctx.ellipse(0,0,s*0.5,s*0.3,0,0,Math.PI*2);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.moveTo(s*0.5,0); ctx.lineTo(s*0.75,-s*0.25); ctx.lineTo(s*0.75,s*0.25);
+      ctx.closePath();
+      ctx.fill();
+      ctx.fillStyle='#012a4a';
+      ctx.beginPath(); ctx.arc(-s*0.2,-s*0.05,s*0.05,0,Math.PI*2); ctx.fill();
+    } else if(it.type === 'turtle'){
+      ctx.fillStyle = '#69db7c';
+      ctx.beginPath();
+      ctx.ellipse(0,0,s*0.5,s*0.38,0,0,Math.PI*2);
+      ctx.fill();
+      ctx.fillStyle = '#2f9e44';
+      ctx.beginPath(); ctx.ellipse(0,0,s*0.36,s*0.26,0,0,Math.PI*2); ctx.fill();
+      ctx.fillStyle = '#69db7c';
+      ctx.beginPath(); ctx.arc(-s*0.55,0,s*0.14,0,Math.PI*2); ctx.fill();
+      ctx.beginPath(); ctx.ellipse(s*0.4,-s*0.32,s*0.14,s*0.09,0.6,0,Math.PI*2); ctx.fill();
+      ctx.beginPath(); ctx.ellipse(s*0.4,s*0.32,s*0.14,s*0.09,-0.6,0,Math.PI*2); ctx.fill();
+    }
+    ctx.restore();
+  }
+
+  function drawPops(){
+    for(const p of pops){
+      ctx.save();
+      ctx.globalAlpha = Math.max(0,p.life);
+      ctx.fillStyle = p.color;
+      ctx.font = 'bold 16px Segoe UI';
+      ctx.textAlign = 'center';
+      ctx.fillText(p.text, p.x*W, p.y*H - (1-p.life)*30);
+      ctx.restore();
+    }
+  }
+
+  let tGlobal = 0;
+  let lastTime = performance.now();
+  function loop(now){
+    const dt = Math.min(0.05,(now-lastTime)/1000);
+    lastTime = now;
+    tGlobal += dt;
+
+    update(dt);
+    drawWater(tGlobal);
+    for(const it of items) drawItem(it);
+    drawBoat();
+    drawPops();
+
+    requestAnimationFrame(loop);
+  }
+  requestAnimationFrame(loop);
+
+  // ---- Input ----
+  window.addEventListener('keydown', e=>{
+    keys[e.key] = true;
+    if((e.key === 'p' || e.key === 'P') && (state==='playing'||state==='paused')){
+      togglePause();
+    }
+  });
+  window.addEventListener('keyup', e=>{ keys[e.key] = false; });
+
+  function clientToLocalX(clientX){
+    const rect = gameArea.getBoundingClientRect();
+    return (clientX - rect.left) / rect.width;
+  }
+  gameArea.addEventListener('mousedown', e=>{ dragTargetX = clientToLocalX(e.clientX); });
+  window.addEventListener('mousemove', e=>{ if(dragTargetX!==null) dragTargetX = clientToLocalX(e.clientX); });
+  window.addEventListener('mouseup', ()=>{ dragTargetX = null; });
+  gameArea.addEventListener('touchstart', e=>{ dragTargetX = clientToLocalX(e.touches[0].clientX); }, {passive:true});
+  gameArea.addEventListener('touchmove', e=>{ dragTargetX = clientToLocalX(e.touches[0].clientX); }, {passive:true});
+  gameArea.addEventListener('touchend', ()=>{ dragTargetX = null; });
+
+  function togglePause(){
+    if(state === 'playing'){
+      state = 'paused';
+      overlayTitle.textContent = 'Paused';
+      overlayText.textContent = 'Take a breath. The ocean can wait a moment.';
+      startBtn.textContent = 'Resume';
+      overlay.classList.remove('hidden');
+    } else if(state === 'paused'){
+      state = 'playing';
+      overlay.classList.add('hidden');
+    }
+  }
+
+  startBtn.addEventListener('click', ()=>{
+    if(state === 'idle' || state === 'gameover'){
+      resetGame();
+      state = 'playing';
+      overlay.classList.add('hidden');
+    } else if(state === 'levelup'){
+      state = 'playing';
+      overlay.classList.add('hidden');
+    } else if(state === 'paused'){
+      state = 'playing';
+      overlay.classList.add('hidden');
+    }
+  });
+
+  updateHUD();
+})();
+</script>
+</body>
+</html>
