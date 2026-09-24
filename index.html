@@ -3,552 +3,591 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Ocean Cleanup</title>
+<title>Ocean Rescue: Plastic Trap</title>
 <style>
-  :root{
-    --sea-top:#0a3d62;
-    --sea-bottom:#012a4a;
-    --accent:#38d9a9;
-    --accent2:#ffd43b;
-    --danger:#ff6b6b;
-    --panel:rgba(255,255,255,0.08);
-    --text:#eafaf6;
-  }
-  *{box-sizing:border-box;}
-  html,body{
-    height:100%;
-    margin:0;
-    background:#012a4a;
-    font-family:'Segoe UI',Verdana,sans-serif;
-    color:var(--text);
-    overflow:hidden;
-    padding-top:env(safe-area-inset-top,0px);
-    padding-bottom:env(safe-area-inset-bottom,0px);
-  }
-  #wrap{
-    display:flex;
-    flex-direction:column;
-    align-items:center;
-    justify-content:flex-start;
-    height:100%;
-    padding:10px;
-  }
-  h1{
-    margin:4px 0 8px;
-    font-size:clamp(20px,4vw,32px);
-    letter-spacing:1px;
-    color:var(--accent);
-    text-shadow:0 0 12px rgba(56,217,169,0.5);
-  }
-  #hud{
-    display:flex;
-    gap:14px;
-    flex-wrap:wrap;
-    justify-content:center;
-    background:var(--panel);
-    padding:8px 16px;
-    border-radius:12px;
-    margin-bottom:8px;
-    font-size:clamp(13px,2vw,16px);
-    backdrop-filter:blur(4px);
-  }
-  .hud-item{display:flex;gap:6px;align-items:center;}
-  .hud-label{opacity:0.75;}
-  #gameArea{
-    position:relative;
-    width:min(96vw,900px);
-    max-width:900px;
-    aspect-ratio:16/9;
-    border-radius:16px;
-    overflow:hidden;
-    box-shadow:0 10px 40px rgba(0,0,0,0.5), inset 0 0 0 2px rgba(255,255,255,0.08);
-    background:linear-gradient(var(--sea-top),var(--sea-bottom));
-    touch-action:none;
-  }
-  canvas{
-    display:block;
-    width:100%;
-    height:100%;
-  }
-  #overlay{
-    position:absolute;
-    inset:0;
-    display:flex;
-    flex-direction:column;
-    align-items:center;
-    justify-content:center;
-    text-align:center;
-    background:rgba(1,20,35,0.85);
-    padding:20px;
-    gap:14px;
-  }
-  #overlay.hidden{display:none;}
-  #overlay h2{margin:0;color:var(--accent2);font-size:clamp(20px,4vw,30px);}
-  #overlay p{margin:0;max-width:520px;line-height:1.5;font-size:clamp(13px,2vw,15px);opacity:0.9;}
-  button{
-    font-family:inherit;
-    font-size:clamp(14px,2vw,17px);
-    font-weight:600;
-    padding:10px 26px;
-    border-radius:30px;
-    border:none;
-    cursor:pointer;
-    background:linear-gradient(135deg,var(--accent),#2b9e88);
-    color:#012a4a;
-    transition:transform .15s ease, box-shadow .15s ease;
-  }
-  button:hover{transform:translateY(-2px);box-shadow:0 6px 16px rgba(56,217,169,0.4);}
-  button:active{transform:translateY(0);}
-  #legend{
-    display:flex;
-    gap:16px;
-    flex-wrap:wrap;
-    justify-content:center;
-    margin-top:10px;
-    font-size:clamp(11px,1.8vw,13px);
-    opacity:0.85;
-  }
-  .legend-item{display:flex;align-items:center;gap:6px;}
-  .swatch{width:14px;height:14px;border-radius:4px;display:inline-block;}
-  #controlsHint{
-    margin-top:6px;
-    font-size:clamp(11px,1.8vw,13px);
-    opacity:0.6;
-    text-align:center;
-  }
-  #factBanner{
-    position:absolute;
-    top:10px;
-    left:50%;
-    transform:translateX(-50%);
-    background:rgba(1,20,35,0.75);
-    padding:6px 14px;
-    border-radius:20px;
-    font-size:clamp(11px,1.8vw,13px);
-    max-width:80%;
-    text-align:center;
-    opacity:0;
-    transition:opacity .4s ease;
-    pointer-events:none;
-  }
-  #factBanner.show{opacity:1;}
+:root{--ui-bg:rgba(8,22,32,.6);--ui-border:rgba(120,220,255,.3);--accent:#6fe3ff;--bad:#ff6f6f;}
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;background:#020e16;overflow:hidden;font-family:'Segoe UI',system-ui,sans-serif;color:#e6f7ff;}
+#wrap{position:relative;width:100vw;height:100vh;display:flex;align-items:center;justify-content:center;}
+canvas{background:#03202b;max-width:100%;max-height:100%;display:block;}
+.panel{position:absolute;background:var(--ui-bg);border:1px solid var(--ui-border);border-radius:10px;backdrop-filter:blur(6px);padding:9px 13px;font-size:12.5px;}
+#hud-left{top:12px;left:12px;width:170px;}
+#hud-center{top:12px;left:50%;transform:translateX(-50%);text-align:center;min-width:100px;}
+#hud-right{top:12px;right:12px;width:170px;text-align:right;}
+#hud-bottom{bottom:12px;left:50%;transform:translateX(-50%);text-align:center;max-width:540px;min-width:260px;}
+.bar{height:9px;border-radius:5px;background:rgba(255,255,255,.13);overflow:hidden;margin-top:3px;}
+.bar>div{height:100%;background:linear-gradient(90deg,#4fd1ff,#8fffcf);transition:width .25s;}
+.label{opacity:.7;font-size:10px;letter-spacing:1px;text-transform:uppercase;}
+.val{font-weight:700;color:var(--accent);font-size:15px;}
+#toolRow{display:flex;gap:6px;margin-top:7px;}
+.toolIcon{width:30px;height:30px;border-radius:7px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.18);display:flex;align-items:center;justify-content:center;opacity:.5;cursor:pointer;}
+.toolIcon.active{opacity:1;border-color:var(--accent);box-shadow:0 0 8px rgba(111,227,255,.6);}
+#overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;background:radial-gradient(circle at 50% 40%,rgba(6,42,58,.9),rgba(1,8,13,.98));text-align:center;z-index:5;}
+#overlay h1{font-size:clamp(26px,5vw,50px);letter-spacing:3px;background:linear-gradient(90deg,#6fe3ff,#a8ffe0);-webkit-background-clip:text;background-clip:text;color:transparent;margin-bottom:4px;}
+#overlay h2{font-size:13px;letter-spacing:6px;color:#9fd8e8;margin-bottom:22px;font-weight:400;}
+.btn{background:linear-gradient(135deg,#1c7d99,#0b4a5c);border:1px solid var(--ui-border);color:#eafcff;padding:11px 30px;border-radius:8px;font-size:14px;letter-spacing:1px;cursor:pointer;margin:5px;}
+.btn:hover{background:linear-gradient(135deg,#2496b8,#0f5a70);}
+#toast{position:absolute;top:70px;left:50%;transform:translateX(-50%);background:rgba(10,30,42,.85);border:1px solid var(--accent);padding:8px 18px;border-radius:8px;font-size:12.5px;opacity:0;transition:opacity .3s;pointer-events:none;letter-spacing:.5px;}
+#toast.bad{border-color:var(--bad);color:#ffd9d9;}
+#eduToast{position:absolute;bottom:70px;left:50%;transform:translateX(-50%);background:rgba(6,30,42,.9);border:1px solid var(--accent);border-radius:10px;padding:10px 20px;max-width:340px;text-align:center;opacity:0;transition:opacity .4s;}
+#eduToast .tag{font-size:10px;letter-spacing:2px;color:#8fffcf;text-transform:uppercase;}
+#eduToast p{font-size:12.5px;margin-top:3px;}
+#combo{position:absolute;top:52px;right:12px;font-size:13px;color:#ffe08a;opacity:0;transition:opacity .3s;}
+.hidden{display:none!important;}
+@keyframes slowpulse{0%,100%{opacity:1}50%{opacity:.55}}
+.oxy-warn{animation:slowpulse 1.8s ease-in-out infinite;color:#ffb3b3!important;}
+.oxy-warn .bar>div{background:linear-gradient(90deg,#ff8a8a,#ffce8a)!important;}
 </style>
 </head>
 <body>
 <div id="wrap">
-  <h1>🌊 Ocean Cleanup</h1>
-  <div id="hud">
-    <div class="hud-item"><span class="hud-label">Score</span><span id="scoreVal">0</span></div>
-    <div class="hud-item"><span class="hud-label">Time</span><span id="timeVal">60</span>s</div>
-    <div class="hud-item"><span class="hud-label">Lives</span><span id="livesVal">❤️❤️❤️</span></div>
-    <div class="hud-item"><span class="hud-label">Level</span><span id="levelVal">1</span></div>
-  </div>
+<canvas id="game" width="1024" height="576"></canvas>
 
-  <div id="gameArea">
-    <canvas id="game"></canvas>
-    <div id="factBanner"></div>
-    <div id="overlay">
-      <h2 id="overlayTitle">Ocean Cleanup</h2>
-      <p id="overlayText">
-        Guide your cleanup boat to collect floating trash before it sinks or drifts away.
-        Avoid sea turtles and fish — bumping marine life costs a life! Clear enough trash
-        each level to advance. Every 60 seconds unlocks a fact about ocean pollution.
-      </p>
-      <button id="startBtn">Start Cleaning</button>
-    </div>
+<div id="overlay">
+  <h1>OCEAN RESCUE</h1>
+  <h2>PLASTIC TRAP · SAVE. CLEAN. RESTORE.</h2>
+  <button class="btn" id="playBtn">PLAY</button>
+  <button class="btn" id="howBtn">HOW TO PLAY</button>
+  <div id="howPanel" class="hidden" style="max-width:440px;font-size:13px;line-height:1.7;margin-top:14px;color:#cdeef7">
+    WASD / Arrows — swim · SPACE — cycle tool · E — use tool / refill · ESC — pause<br>
+    A continuous timed rescue run. Pollution and animal incidents spawn dynamically —
+    match the right tool to the right hazard: <b>Grabber</b> for loose debris, <b>Net Cutter</b>
+    for nets and entanglement, <b>Suction</b> for microplastic. Watch your oxygen — surface
+    or find an oxygen station before it runs out.
   </div>
+</div>
 
-  <div id="legend">
-    <div class="legend-item"><span class="swatch" style="background:#8d6e63;border-radius:2px;"></span>Bottle / Trash (+10)</div>
-    <div class="legend-item"><span class="swatch" style="background:#ff922b;border-radius:2px;"></span>Bag / Net (+15, faster)</div>
-    <div class="legend-item"><span class="swatch" style="background:#69db7c;border-radius:50%;"></span>Turtle (avoid!)</div>
-    <div class="legend-item"><span class="swatch" style="background:#4dabf7;border-radius:50%;"></span>Fish (avoid!)</div>
+<div id="setupScreen" class="hidden" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;background:radial-gradient(circle at 50% 40%,rgba(6,42,58,.92),rgba(1,8,13,.98));z-index:5;">
+  <h2 style="letter-spacing:4px;font-size:15px;color:#9fd8e8;margin-bottom:18px;font-weight:400">MISSION SETUP</h2>
+  <div class="label" style="margin-bottom:8px">SELECT SESSION TIME</div>
+  <div style="display:flex;gap:8px;margin-bottom:14px">
+    <button class="btn timeBtn" data-min="5" style="padding:9px 20px;font-size:13px">5 MIN</button>
+    <button class="btn timeBtn" data-min="10" style="padding:9px 20px;font-size:13px">10 MIN</button>
+    <button class="btn timeBtn" data-min="15" style="padding:9px 20px;font-size:13px">15 MIN</button>
   </div>
-  <div id="controlsHint">Move: Arrow keys / A-D / drag with mouse or finger &nbsp;•&nbsp; Pause: P</div>
+  <div style="display:flex;align-items:center;gap:8px;margin-bottom:20px">
+    <span class="label">CUSTOM</span>
+    <input id="customMin" type="number" min="1" max="60" value="10" style="width:56px;padding:6px;border-radius:6px;border:1px solid var(--ui-border);background:rgba(255,255,255,.08);color:#eafcff;text-align:center;font-size:14px">
+    <span class="label">minutes</span>
+  </div>
+  <button class="btn" id="startRescueBtn" style="font-size:15px">START RESCUE</button>
+</div>
+
+<div id="hud-left" class="panel hidden">
+  <div class="label" id="oxyLabel">Oxygen</div>
+  <div class="bar"><div id="oxyBar" style="width:100%"></div></div>
+  <div id="toolRow"></div>
+</div>
+<div id="hud-center" class="panel hidden">
+  <div class="label">Time</div>
+  <div class="val" id="timeVal">10:00</div>
+</div>
+<div id="hud-right" class="panel hidden">
+  <div class="label">Ocean Health</div>
+  <div class="val" id="healthVal">18%</div>
+  <div class="bar"><div id="healthBar" style="width:18%"></div></div>
+  <div style="display:flex;gap:14px;margin-top:6px">
+    <div><div class="label">Rescued</div><div class="val" id="rescuedVal" style="font-size:13px">0</div></div>
+    <div><div class="label">Pollution</div><div class="val" id="pollutionVal" style="font-size:13px">0</div></div>
+  </div>
+  <div class="label" style="margin-top:5px">Score</div>
+  <div class="val" id="scoreVal" style="font-size:13px">0</div>
+</div>
+<div id="hud-bottom" class="panel hidden"><span id="objective">Search the reef.</span></div>
+<div id="emergency" class="hidden" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;background:rgba(2,10,18,.55);z-index:4;pointer-events:none;">
+  <div style="font-size:14px;letter-spacing:4px;color:#ff9a9a">NO OXYGEN</div>
+  <div id="emergencyCount" style="font-size:52px;font-weight:700;color:#ff9a9a">3</div>
+</div>
+<div id="toast"></div>
+<div id="eduToast"><div class="tag" id="eduTag"></div><p id="eduText"></p></div>
+<div id="combo" class="panel"></div>
+
+<div id="pauseMenu" class="hidden" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;background:rgba(2,10,15,.8);z-index:6;">
+  <h1 style="letter-spacing:4px;margin-bottom:20px;color:#eafcff">PAUSED</h1>
+  <button class="btn" id="resumeBtn">RESUME</button>
+  <button class="btn" id="restartBtn">RESTART RUN</button>
+  <button class="btn" id="menuBtn">MAIN MENU</button>
+</div>
 </div>
 
 <script>
-(function(){
-  const canvas = document.getElementById('game');
-  const ctx = canvas.getContext('2d');
-  const gameArea = document.getElementById('gameArea');
-  const overlay = document.getElementById('overlay');
-  const overlayTitle = document.getElementById('overlayTitle');
-  const overlayText = document.getElementById('overlayText');
-  const startBtn = document.getElementById('startBtn');
-  const scoreVal = document.getElementById('scoreVal');
-  const timeVal = document.getElementById('timeVal');
-  const livesVal = document.getElementById('livesVal');
-  const levelVal = document.getElementById('levelVal');
-  const factBanner = document.getElementById('factBanner');
+const cv=document.getElementById('game'),ctx=cv.getContext('2d');
+const W=cv.width,H=cv.height;
+const WORLD_W=3200;
+let RUN_SECONDS=600; // set by mission setup screen
+const SURFACE_Y=95; // world-y above which the player is in the oxygen zone
+const GRACE_SECONDS=3; // grace period once oxygen hits zero
 
-  let W = 900, H = 506; // 16:9 baseline, rescaled via CSS
-  function resize(){
-    const rect = gameArea.getBoundingClientRect();
-    W = rect.width; H = rect.height;
-    canvas.width = W * devicePixelRatio;
-    canvas.height = H * devicePixelRatio;
-    ctx.setTransform(devicePixelRatio,0,0,devicePixelRatio,0,0);
+function rand(a,b){return a+Math.random()*(b-a);}
+function clamp(v,a,b){return Math.max(a,Math.min(b,v));}
+function d2(ax,ay,bx,by){return Math.hypot(ax-bx,ay-by);}
+
+// ================= STATE =================
+const state={
+  running:false,paused:false,t:0,elapsed:0,timeLeft:RUN_SECONDS,
+  oceanHealth:18,oxygen:100,score:0,rescued:0,combo:0,comboT:0,
+  tools:['Grabber','Net Cutter','Suction'],toolIdx:0,keys:{},ended:false,
+  emergency:false,graceLeft:0,died:false
+};
+document.addEventListener('keydown',e=>{
+  const k=e.key.toLowerCase();state.keys[k]=true;
+  if(k===' '&&state.running&&!state.paused){state.toolIdx=(state.toolIdx+1)%3;updateTools();}
+  if(k==='escape'&&state.running){togglePause();}
+});
+document.addEventListener('keyup',e=>state.keys[e.key.toLowerCase()]=false);
+
+const toolRow=document.getElementById('toolRow');
+function toolIconSVG(i){
+  const c='#dff8ff';
+  if(i===0)return `<svg width=18 height=18 viewBox="0 0 24 24"><path d="M4 14c0-4 3-8 8-8s8 4 8 8" stroke="${c}" stroke-width="2" fill="none"/><path d="M6 14l-2 6M18 14l2 6" stroke="${c}" stroke-width="2"/></svg>`;
+  if(i===1)return `<svg width=18 height=18 viewBox="0 0 24 24"><circle cx=7 cy=7 r=3 stroke="${c}" stroke-width=2 fill="none"/><circle cx=7 cy=17 r=3 stroke="${c}" stroke-width=2 fill="none"/><path d="M9 9L19 19M9 15L19 5" stroke="${c}" stroke-width=2/></svg>`;
+  return `<svg width=18 height=18 viewBox="0 0 24 24"><path d="M12 2v10M8 8l4 4 4-4" stroke="${c}" stroke-width=2 fill="none"/><ellipse cx=12 cy=18 rx=7 ry=3 stroke="${c}" stroke-width=2 fill="none"/></svg>`;
+}
+state.tools.forEach((t,i)=>{const el=document.createElement('div');el.className='toolIcon'+(i===0?' active':'');el.innerHTML=toolIconSVG(i);el.title=t;el.onclick=()=>{state.toolIdx=i;updateTools();};toolRow.appendChild(el);});
+function updateTools(){document.querySelectorAll('.toolIcon').forEach((el,i)=>el.classList.toggle('active',i===state.toolIdx));}
+
+function toast(msg,bad){const el=document.getElementById('toast');el.textContent=msg;el.className=bad?'bad':'';el.style.opacity=1;clearTimeout(toast._t);toast._t=setTimeout(()=>el.style.opacity=0,1400);}
+function eduToast(tag,text){const t=document.getElementById('eduToast');document.getElementById('eduTag').textContent=tag;document.getElementById('eduText').textContent=text;t.style.opacity=1;clearTimeout(eduToast._t);eduToast._t=setTimeout(()=>t.style.opacity=0,3200);}
+function objective(txt){document.getElementById('objective').textContent=txt;}
+function addScore(n,label){state.score+=n;state.combo++;state.comboT=90;const c=document.getElementById('combo');if(state.combo>=3){c.textContent='CLEANUP STREAK ×'+state.combo;c.style.opacity=1;}
+  floatTexts.push({x:player.x,y:player.y-20,text:(n>0?'+':'')+n+(label?' '+label:''),age:0,color:label?'#8fffcf':'#ffe08a'});}
+let floatTexts=[];
+
+// ================= PLAYER =================
+const player={x:220,y:300,facing:1,anim:0,tired:0};
+
+// ================= PARTICLES =================
+class Particle{constructor(x,y,type){this.x=x;this.y=y;this.type=type;this.r=rand(1,type==='bubble'?3.4:2.2);
+  this.vy=type==='bubble'?-rand(.25,.8):rand(-.15,.15);this.vx=rand(-.12,.12);this.life=rand(220,480);this.age=0;this.op=rand(.15,.45);}
+  update(){this.x+=this.vx;this.y+=this.vy;this.age++;if(this.type==='plankton')this.x+=Math.sin(this.age*.03)*.25;}
+  alive(){return this.age<this.life&&this.y>-10;}
+  draw(){ctx.globalAlpha=this.op*(1-this.age/this.life);ctx.fillStyle=this.type==='bubble'?'#dff8ff':'#bfffcf';ctx.beginPath();ctx.arc(this.x,this.y,this.r,0,7);ctx.fill();ctx.globalAlpha=1;}}
+let particles=[];
+function spawnAmbient(){if(particles.length<140){particles.push(new Particle(rand(cam.x-100,cam.x+W+100),H+5,'bubble'));if(Math.random()<.4)particles.push(new Particle(rand(cam.x-100,cam.x+W+100),rand(0,H),'plankton'));}}
+
+// ================= WORLD DECOR =================
+const farRocks=[...Array(16)].map((_,i)=>({x:i*220+rand(-30,30),w:rand(130,230),h:rand(90,170)}));
+const midCoral=[...Array(20)].map((_,i)=>({x:i*160+rand(-20,20),size:rand(32,74),hue:rand(280,335)}));
+const seaweed=[...Array(28)].map(()=>({x:rand(0,WORLD_W),h:rand(60,150),ph:rand(0,7),hue:rand(100,150)}));
+let fishSchool=[...Array(24)].map(()=>({x:rand(0,WORLD_W),y:rand(100,H-100),a:rand(0,7),sp:rand(.4,.9)}));
+let jellies=[...Array(6)].map(()=>({x:rand(0,WORLD_W),y:rand(80,300),ph:rand(0,7)}));
+
+// ================= POLLUTION =================
+const KIND_TOOL={bottle:0,bag:0,can:0,straw:2,microplastic:2,net:1,rope:1};
+class Pollution{constructor(x,y,kind){this.x=x;this.y=y;this.kind=kind;this.collected=false;this.rot=rand(0,7);this.scale=rand(.8,1.25);this.bob=rand(0,7);}
+  draw(){if(this.collected)return;const b=Math.sin(state.t*.03+this.bob)*4;ctx.save();ctx.translate(this.x,this.y+b);ctx.rotate(Math.sin(state.t*.01+this.rot)*.15);ctx.scale(this.scale,this.scale);
+    if(this.kind==='bottle'){const g=ctx.createLinearGradient(-6,-18,6,14);g.addColorStop(0,'rgba(200,235,160,.6)');g.addColorStop(1,'rgba(140,190,110,.4)');ctx.fillStyle=g;ctx.fillRect(-6,-16,12,30);ctx.fillRect(-4,-22,8,8);ctx.strokeStyle='rgba(255,255,255,.3)';ctx.strokeRect(-6,-16,12,30);}
+    else if(this.kind==='bag'){ctx.fillStyle='rgba(225,230,255,.35)';ctx.beginPath();ctx.moveTo(-14,-4);ctx.quadraticCurveTo(0,-16,14,-4);ctx.quadraticCurveTo(10,10,0,14);ctx.quadraticCurveTo(-10,10,-14,-4);ctx.fill();ctx.strokeStyle='rgba(255,255,255,.4)';ctx.stroke();}
+    else if(this.kind==='can'){ctx.fillStyle='rgba(180,190,200,.55)';ctx.fillRect(-6,-14,12,26);ctx.fillStyle='rgba(120,200,220,.4)';ctx.fillRect(-6,-14,12,5);}
+    else if(this.kind==='straw'){ctx.strokeStyle='rgba(255,150,150,.6)';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(-10,-6);ctx.lineTo(10,6);ctx.stroke();}
+    else if(this.kind==='microplastic'){ctx.fillStyle='rgba(255,255,255,.4)';for(let i=0;i<6;i++){const a=i*1.05;ctx.beginPath();ctx.arc(Math.cos(a)*8,Math.sin(a)*8,2,0,7);ctx.fill();}}
+    else if(this.kind==='rope'){ctx.strokeStyle='rgba(210,180,140,.6)';ctx.lineWidth=4;ctx.beginPath();ctx.moveTo(-14,-6);ctx.quadraticCurveTo(0,10,14,-4);ctx.stroke();}
+    else if(this.kind==='net'){ctx.strokeStyle='rgba(230,230,230,.55)';ctx.lineWidth=1.5;for(let i=-12;i<=12;i+=6){ctx.beginPath();ctx.moveTo(i,-12);ctx.lineTo(i,12);ctx.stroke();ctx.beginPath();ctx.moveTo(-12,i);ctx.lineTo(12,i);ctx.stroke();}}
+    ctx.restore();}
+}
+let pollutionItems=[];
+function spawnPollution(near){
+  const diff=clamp(state.elapsed/RUN_SECONDS,0,1);
+  const kinds=diff<0.2?['bottle','bag','straw']:diff<0.4?['bottle','bag','straw','can','microplastic']:['bottle','bag','can','microplastic','rope','net'];
+  const kind=kinds[Math.floor(rand(0,kinds.length))];
+  const x=near??rand(player.x-500,player.x+900);
+  pollutionItems.push(new Pollution(clamp(x,40,WORLD_W-40),rand(160,H-80),kind));
+}
+for(let i=0;i<10;i++)spawnPollution(rand(0,900));
+
+// ================= ANIMALS =================
+class Animal{
+  constructor(kind,x,y){this.kind=kind;this.x=x;this.y=y;this.state='trapped';this.phase=0;this.parts=this.kind==='dolphin'?4:this.kind==='seal'?3:3;this.fixed=[];for(let i=0;i<this.parts;i++)this.fixed.push(true);this.driftA=rand(0,7);this.escapeT=0;}
+  progress(){return 1-this.fixed.filter(f=>f).length/this.parts;}
+  cut(){const idx=this.fixed.findIndex(f=>f);if(idx>=0){this.fixed[idx]=false;for(let i=0;i<12;i++)particles.push(new Particle(this.x,this.y,'plankton'));
+      if(!this.fixed.some(f=>f)){this.state='freed';this.escapeT=0;
+        state.rescued++;document.getElementById('rescuedVal').textContent=state.rescued;
+        state.oceanHealth=clamp(state.oceanHealth+8,0,100);addScore(150,'RESCUE');
+        const facts={turtle:['Sea Turtle','Discarded plastic can be mistaken for food by sea turtles.'],
+          dolphin:['Dolphin','Ghost fishing nets injure thousands of dolphins every year.'],
+          seal:['Seal','Seals can become entangled in rope and packaging for life.']};
+        eduToast(...facts[this.kind]);toast('RESCUE COMPLETE',false);
+      }}}
+  update(){this.phase+=this.state==='trapped'?.01:.05;
+    if(this.state==='trapped'){this.driftA+=.004;this.x+=Math.sin(this.driftA)*.15;}
+    else{this.escapeT++;this.x+=(this.kind==='dolphin'?2.6:1.6)*(this.fleeDir||(this.fleeDir=Math.random()<.5?-1:1));this.y+=Math.sin(this.phase)*.6;}
   }
-  window.addEventListener('resize', resize);
-  resize();
-
-  const FACTS = [
-    "Over 8 million tons of plastic enter our oceans every year.",
-    "Sea turtles often mistake plastic bags for jellyfish.",
-    "By 2050, oceans could contain more plastic than fish by weight.",
-    "A plastic bottle can take up to 450 years to decompose.",
-    "Microplastics have been found in nearly every marine species studied.",
-    "Cleaning beaches and waterways is one of the most effective ways to stop ocean plastic.",
-  ];
-  let factIndex = 0;
-
-  function showFact(){
-    factBanner.textContent = "💡 " + FACTS[factIndex % FACTS.length];
-    factIndex++;
-    factBanner.classList.add('show');
-    setTimeout(()=>factBanner.classList.remove('show'), 3500);
-  }
-
-  // ---- Game state ----
-  let state = 'idle'; // idle, playing, paused, gameover, levelup
-  let score = 0;
-  let lives = 3;
-  let level = 1;
-  let timeLeft = 60;
-  let trashCollectedThisLevel = 0;
-  let trashNeeded = 8;
-  let lastFactTime = 0;
-
-  const boat = { x: 0.5, y: 0.85, w: 70, h: 40, speed: 0.012 };
-
-  let items = []; // trash + hazards
-  let keys = {};
-  let dragTargetX = null;
-
-  function resetGame(){
-    score = 0; lives = 3; level = 1; timeLeft = 60;
-    trashCollectedThisLevel = 0; trashNeeded = 8;
-    items = [];
-    boat.x = 0.5;
-    updateHUD();
-  }
-
-  function updateHUD(){
-    scoreVal.textContent = score;
-    timeVal.textContent = Math.max(0, Math.ceil(timeLeft));
-    livesVal.textContent = '❤️'.repeat(Math.max(0,lives)) + '🖤'.repeat(Math.max(0,3-lives));
-    levelVal.textContent = level;
-  }
-
-  function spawnItem(){
-    const roll = Math.random();
-    let type;
-    if(roll < 0.42) type = 'bottle';
-    else if(roll < 0.68) type = 'bag';
-    else if(roll < 0.86) type = 'fish';
-    else type = 'turtle';
-
-    const baseSpeed = 0.09 + level*0.012;
-    items.push({
-      type,
-      x: 0.05 + Math.random()*0.9,
-      y: -0.08,
-      vy: (type==='bag' ? baseSpeed*1.4 : type==='fish' ? baseSpeed*1.6 : type==='turtle' ? baseSpeed*1.1 : baseSpeed),
-      size: type==='turtle' ? 0.07 : type==='fish' ? 0.055 : 0.05,
-      wob: Math.random()*Math.PI*2,
-      caught:false
-    });
-  }
-
-  let spawnTimer = 0;
-  let spawnInterval = 55; // frames
-
-  function update(dt, framesElapsed){
-    if(state !== 'playing') return;
-
-    timeLeft -= dt;
-    lastFactTime += dt;
-    if(lastFactTime >= 20){ lastFactTime = 0; showFact(); }
-
-    if(timeLeft <= 0){
-      endGame(trashCollectedThisLevel >= trashNeeded);
-      return;
+  dead(){return this.state==='freed'&&this.escapeT>220;}
+  draw(sx,sy){
+    ctx.save();ctx.translate(sx,sy);
+    const bob=Math.sin(this.phase*2)*(this.state==='trapped'?2:8);
+    ctx.translate(0,bob);
+    const dim=this.state==='trapped'?0.72:1;
+    ctx.globalAlpha=dim;
+    if(this.kind==='turtle'){
+      const g=ctx.createRadialGradient(-8,-8,4,0,0,36);g.addColorStop(0,'#5cc989');g.addColorStop(.6,'#2f8c56');g.addColorStop(1,'#194a2e');
+      ctx.fillStyle=g;ctx.beginPath();ctx.ellipse(0,0,34,24,0,0,7);ctx.fill();
+      // shell pattern (hexagon plates)
+      ctx.strokeStyle='rgba(20,60,35,.55)';ctx.lineWidth=1.4;
+      for(let r=-1;r<=1;r++)for(let c=-2;c<=2;c++){const px=c*11,py=r*9;ctx.beginPath();ctx.moveTo(px-6,py);ctx.lineTo(px-3,py-6);ctx.lineTo(px+3,py-6);ctx.lineTo(px+6,py);ctx.lineTo(px+3,py+6);ctx.lineTo(px-3,py+6);ctx.closePath();ctx.stroke();}
+      ctx.fillStyle='rgba(255,255,255,.18)';ctx.beginPath();ctx.ellipse(-6,-10,16,6,-.3,0,7);ctx.fill();
+      // head + eye
+      ctx.fillStyle='#3fae6e';ctx.beginPath();ctx.ellipse(-30,-2,10,7,0,0,7);ctx.fill();
+      ctx.fillStyle='#0e2c1a';ctx.beginPath();ctx.arc(-34,-4,1.6,0,7);ctx.fill();
+      const fl=Math.sin(this.phase*3)*15;ctx.strokeStyle='#1f6b45';ctx.lineWidth=8;ctx.lineCap='round';
+      ctx.beginPath();ctx.moveTo(10,14);ctx.lineTo(20,14+fl);ctx.stroke();ctx.beginPath();ctx.moveTo(-10,14);ctx.lineTo(-20,14-fl);ctx.stroke();
+      ctx.beginPath();ctx.moveTo(12,-14);ctx.lineTo(20,-16-fl*.6);ctx.stroke();
+    } else if(this.kind==='dolphin'){
+      const g=ctx.createLinearGradient(-40,-16,40,16);g.addColorStop(0,'#3f6d86');g.addColorStop(.55,'#8fb9cc');g.addColorStop(1,'#eaf6fb');
+      ctx.fillStyle=g;ctx.beginPath();ctx.ellipse(0,0,40,15,0,0,7);ctx.fill();
+      ctx.beginPath();ctx.moveTo(30,-3);ctx.quadraticCurveTo(42,-6,48,-2);ctx.quadraticCurveTo(40,2,32,3);ctx.closePath();ctx.fill();
+      const tailW=Math.sin(this.phase*3)*10;ctx.beginPath();ctx.moveTo(-40,0);ctx.lineTo(-56,-11+tailW);ctx.lineTo(-48,0);ctx.lineTo(-56,11+tailW);ctx.closePath();ctx.fill();
+      ctx.beginPath();ctx.moveTo(-2,-14);ctx.quadraticCurveTo(4,-30,10,-13);ctx.quadraticCurveTo(4,-16,-2,-14);ctx.closePath();ctx.fill();
+      ctx.fillStyle='#1b3644';ctx.beginPath();ctx.arc(30,-2,1.8,0,7);ctx.fill();
+      ctx.strokeStyle='rgba(30,60,75,.35)';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(-25,-4);ctx.quadraticCurveTo(0,-9,20,-5);ctx.stroke();
+    } else {
+      const g=ctx.createRadialGradient(-6,-8,4,0,0,32);g.addColorStop(0,'#c2b195');g.addColorStop(.6,'#8a765a');g.addColorStop(1,'#4c4030');
+      ctx.fillStyle=g;ctx.beginPath();ctx.ellipse(0,0,28,18,0,0,7);ctx.fill();
+      ctx.fillStyle='#7a6c58';ctx.beginPath();ctx.ellipse(24,-4,9,7,0,0,7);ctx.fill();
+      ctx.strokeStyle='rgba(30,25,15,.6)';ctx.lineWidth=1;
+      [[-2,-3],[0,-5],[2,-3]].forEach(([dx,dy])=>{ctx.beginPath();ctx.moveTo(30,-4);ctx.lineTo(30+8+dx,-4+dy);ctx.stroke();});
+      ctx.fillStyle='#20180f';ctx.beginPath();ctx.arc(28,-6,1.6,0,7);ctx.fill();
+      const flS=Math.sin(this.phase*2.4)*8;ctx.strokeStyle='#5c4f3d';ctx.lineWidth=6;ctx.lineCap='round';
+      ctx.beginPath();ctx.moveTo(-18,10);ctx.lineTo(-26,10+flS);ctx.stroke();
     }
-
-    // movement
-    let dir = 0;
-    if(keys['ArrowLeft']||keys['a']||keys['A']) dir -= 1;
-    if(keys['ArrowRight']||keys['d']||keys['D']) dir += 1;
-    if(dragTargetX !== null){
-      const diff = dragTargetX - boat.x;
-      dir = Math.max(-1, Math.min(1, diff*10));
-    }
-    boat.x += dir * boat.speed;
-    boat.x = Math.max(0.04, Math.min(0.96, boat.x));
-
-    // spawn
-    spawnTimer += 1;
-    const interval = Math.max(22, spawnInterval - level*3);
-    if(spawnTimer > interval){
-      spawnTimer = 0;
-      spawnItem();
-    }
-
-    // update items
-    for(const it of items){
-      it.y += it.vy * dt;
-      it.wob += dt*2;
-      it.x += Math.sin(it.wob)*0.0009;
-    }
-
-    // collision
-    const boatBox = {
-      x: boat.x - (boat.w/W)/2 * (W/W), // will compute in px below
-    };
-    const boatPxW = 74, boatPxH = 40;
-    const boatPxX = boat.x*W - boatPxW/2;
-    const boatPxY = boat.y*H - boatPxH/2;
-
-    for(const it of items){
-      if(it.caught) continue;
-      const s = it.size*Math.min(W,H);
-      const ix = it.x*W - s/2;
-      const iy = it.y*H - s/2;
-      const overlap = !(ix > boatPxX+boatPxW || ix+s < boatPxX || iy > boatPxY+boatPxH || iy+s < boatPxY);
-      if(overlap){
-        it.caught = true;
-        if(it.type === 'bottle'){ score += 10; trashCollectedThisLevel++; spawnPop(it.x,it.y,'#8d6e63','+10'); }
-        else if(it.type === 'bag'){ score += 15; trashCollectedThisLevel++; spawnPop(it.x,it.y,'#ff922b','+15'); }
-        else { // hazard
-          lives -= 1;
-          spawnPop(it.x,it.y,'#ff6b6b','-1 ❤');
-          if(lives <= 0){ endGame(false); return; }
-        }
-      }
-    }
-
-    items = items.filter(it => !it.caught && it.y < 1.15);
-
-    // level complete
-    if(trashCollectedThisLevel >= trashNeeded){
-      levelUp();
-      return;
-    }
-
-    updatePops(dt);
-    updateHUD();
-  }
-
-  // floating score popups
-  let pops = [];
-  function spawnPop(x,y,color,text){
-    pops.push({x,y,color,text,life:1});
-  }
-  function updatePops(dt){
-    for(const p of pops) p.life -= dt*0.9;
-    pops = pops.filter(p=>p.life>0);
-  }
-
-  function levelUp(){
-    state = 'levelup';
-    level += 1;
-    trashCollectedThisLevel = 0;
-    trashNeeded = 8 + level*2;
-    timeLeft = Math.min(75, 60 + level*4);
-    items = [];
-    updateHUD();
-    overlayTitle.textContent = `Level ${level}!`;
-    overlayText.textContent = `Great work! Ocean getting cleaner. Collect ${trashNeeded} pieces of trash before time runs out. Watch out — hazards move faster now!`;
-    startBtn.textContent = 'Continue';
-    overlay.classList.remove('hidden');
-  }
-
-  function endGame(won){
-    state = 'gameover';
-    overlayTitle.textContent = won ? '🎉 Ocean Saved (for now)!' : '💔 Game Over';
-    overlayText.textContent = won
-      ? `You scored ${score} points and reached level ${level}. Every piece of trash removed makes a real difference — try to beat your score!`
-      : `You scored ${score} points and reached level ${level}. The ocean needs you — give it another go!`;
-    startBtn.textContent = 'Play Again';
-    overlay.classList.remove('hidden');
-  }
-
-  // ---- Drawing ----
-  function drawWater(t){
-    const grad = ctx.createLinearGradient(0,0,0,H);
-    grad.addColorStop(0,'#0a3d62');
-    grad.addColorStop(1,'#012a4a');
-    ctx.fillStyle = grad;
-    ctx.fillRect(0,0,W,H);
-
-    ctx.strokeStyle = 'rgba(255,255,255,0.08)';
-    ctx.lineWidth = 2;
-    for(let i=0;i<4;i++){
-      ctx.beginPath();
-      const yy = (H/5)*(i+1);
-      for(let x=0;x<=W;x+=14){
-        const yOff = Math.sin(x*0.02 + t*1.5 + i)* 4;
-        if(x===0) ctx.moveTo(x, yy+yOff); else ctx.lineTo(x, yy+yOff);
-      }
-      ctx.stroke();
-    }
-  }
-
-  function drawBoat(){
-    const bx = boat.x*W, by = boat.y*H;
-    ctx.save();
-    ctx.translate(bx,by);
-    // hull
-    ctx.fillStyle = '#ffd43b';
-    ctx.beginPath();
-    ctx.moveTo(-37,0);
-    ctx.quadraticCurveTo(-37,18,0,20);
-    ctx.quadraticCurveTo(37,18,37,0);
-    ctx.lineTo(-37,0);
-    ctx.fill();
-    // cabin
-    ctx.fillStyle = '#eafaf6';
-    ctx.fillRect(-14,-18,28,18);
-    ctx.fillStyle = '#012a4a';
-    ctx.fillRect(-8,-13,7,7);
-    ctx.fillRect(2,-13,7,7);
-    // net
-    ctx.strokeStyle = 'rgba(255,255,255,0.6)';
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.moveTo(-30,4); ctx.lineTo(-38,22);
-    ctx.moveTo(30,4); ctx.lineTo(38,22);
-    ctx.moveTo(-38,22); ctx.quadraticCurveTo(0,34,38,22);
-    ctx.stroke();
-    ctx.restore();
-  }
-
-  function drawItem(it){
-    const s = it.size*Math.min(W,H);
-    const x = it.x*W, y = it.y*H;
-    ctx.save();
-    ctx.translate(x,y);
-    if(it.type === 'bottle'){
-      ctx.fillStyle = '#8d6e63';
-      ctx.fillRect(-s*0.18, -s*0.5, s*0.36, s);
-      ctx.fillStyle = '#a1887f';
-      ctx.fillRect(-s*0.1, -s*0.6, s*0.2, s*0.15);
-    } else if(it.type === 'bag'){
-      ctx.fillStyle = '#ff922b';
-      ctx.beginPath();
-      ctx.ellipse(0,0,s*0.5,s*0.4,0,0,Math.PI*2);
-      ctx.fill();
-      ctx.strokeStyle='#fff3bf';
-      ctx.lineWidth=2;
-      ctx.beginPath();
-      ctx.moveTo(-s*0.2,-s*0.35); ctx.lineTo(-s*0.1,-s*0.5);
-      ctx.moveTo(s*0.2,-s*0.35); ctx.lineTo(s*0.1,-s*0.5);
-      ctx.stroke();
-    } else if(it.type === 'fish'){
-      ctx.fillStyle = '#4dabf7';
-      ctx.beginPath();
-      ctx.ellipse(0,0,s*0.5,s*0.3,0,0,Math.PI*2);
-      ctx.fill();
-      ctx.beginPath();
-      ctx.moveTo(s*0.5,0); ctx.lineTo(s*0.75,-s*0.25); ctx.lineTo(s*0.75,s*0.25);
-      ctx.closePath();
-      ctx.fill();
-      ctx.fillStyle='#012a4a';
-      ctx.beginPath(); ctx.arc(-s*0.2,-s*0.05,s*0.05,0,Math.PI*2); ctx.fill();
-    } else if(it.type === 'turtle'){
-      ctx.fillStyle = '#69db7c';
-      ctx.beginPath();
-      ctx.ellipse(0,0,s*0.5,s*0.38,0,0,Math.PI*2);
-      ctx.fill();
-      ctx.fillStyle = '#2f9e44';
-      ctx.beginPath(); ctx.ellipse(0,0,s*0.36,s*0.26,0,0,Math.PI*2); ctx.fill();
-      ctx.fillStyle = '#69db7c';
-      ctx.beginPath(); ctx.arc(-s*0.55,0,s*0.14,0,Math.PI*2); ctx.fill();
-      ctx.beginPath(); ctx.ellipse(s*0.4,-s*0.32,s*0.14,s*0.09,0.6,0,Math.PI*2); ctx.fill();
-      ctx.beginPath(); ctx.ellipse(s*0.4,s*0.32,s*0.14,s*0.09,-0.6,0,Math.PI*2); ctx.fill();
+    ctx.globalAlpha=1;
+    if(this.state==='trapped'){
+      ctx.strokeStyle='rgba(225,225,225,.9)';ctx.lineWidth=2.2;
+      this.fixed.forEach((active,i)=>{if(!active)return;const ang=i*2.1;ctx.beginPath();ctx.moveTo(Math.cos(ang)*38,Math.sin(ang)*22);ctx.lineTo(Math.cos(ang+3)*38,Math.sin(ang+3)*22);ctx.stroke();});
+      ctx.fillStyle='rgba(255,150,100,.9)';ctx.font='14px sans-serif';ctx.textAlign='center';ctx.fillText('!',0,-40);ctx.textAlign='left';
+    } else {
+      // freed: light bubble trail
+      if(Math.random()<.3)particles.push(new Particle(sx+cam.x,sy+bob+8,'bubble'));
     }
     ctx.restore();
   }
+}
+let animals=[];
+function spawnAnimal(){
+  const kinds=['turtle','turtle','dolphin','seal'];
+  const kind=kinds[Math.floor(rand(0,kinds.length))];
+  const x=clamp(player.x+rand(400,900),80,WORLD_W-80);
+  animals.push(new Animal(kind,x,rand(180,H-120)));
+  toast((kind==='turtle'?'A turtle':kind==='dolphin'?'A dolphin':'A seal')+' is in distress nearby!',false);
+}
 
-  function drawPops(){
-    for(const p of pops){
-      ctx.save();
-      ctx.globalAlpha = Math.max(0,p.life);
-      ctx.fillStyle = p.color;
-      ctx.font = 'bold 16px Segoe UI';
-      ctx.textAlign = 'center';
-      ctx.fillText(p.text, p.x*W, p.y*H - (1-p.life)*30);
-      ctx.restore();
+// ================= OXYGEN STATIONS =================
+class OxyStation{constructor(x,y){this.x=x;this.y=y;this.glow=0;}
+  draw(sx,sy){ctx.save();ctx.translate(sx,sy);
+    const near=d2(player.x,player.y,this.x,this.y)<70;this.glow+=((near?1:0.15)-this.glow)*.08;
+    ctx.globalAlpha=.35+.15*Math.sin(state.t*.03);
+    ctx.strokeStyle=`rgba(120,230,255,${.25+.4*this.glow})`;ctx.lineWidth=2;ctx.beginPath();ctx.arc(0,0,26+this.glow*6,0,7);ctx.stroke();
+    ctx.globalAlpha=1;
+    // frame + tank
+    ctx.fillStyle='#33505c';ctx.fillRect(-12,-20,24,38);
+    const tg=ctx.createLinearGradient(-8,-18,8,14);tg.addColorStop(0,'#7fb8cc');tg.addColorStop(1,'#3d6f80');
+    ctx.fillStyle=tg;ctx.fillRect(-7,-16,14,30);
+    ctx.fillStyle=`rgba(111,227,255,${.6+.4*Math.sin(state.t*.05)})`;ctx.beginPath();ctx.arc(0,-20,4,0,7);ctx.fill();
+    ctx.strokeStyle='#204048';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(0,-16);ctx.quadraticCurveTo(14,-8,10,4);ctx.stroke();
+    if(Math.random()<.06)particles.push(new Particle(this.x,this.y-16,'bubble'));
+    if(near){ctx.fillStyle='#dff8ff';ctx.font='11px sans-serif';ctx.textAlign='center';ctx.fillText('E — REFILL',0,-34);ctx.textAlign='left';}
+    ctx.restore();}
+}
+let oxyStations=[];
+function seedStations(){oxyStations=[];for(let i=0;i<Math.floor(WORLD_W/700);i++)oxyStations.push(new OxyStation(400+i*700+rand(-100,100),rand(H*.45,H-90)));}
+seedStations();
+
+// ================= EVENT SPAWNER =================
+let spawnTimer=0,animalTimer=340;
+function updateSpawner(){
+  spawnTimer--;if(spawnTimer<=0){
+    const diff=clamp(state.elapsed/RUN_SECONDS,0,1);
+    spawnTimer=Math.max(50,150-diff*90);
+    if(pollutionItems.filter(p=>!p.collected).length<10+diff*14){
+      if(Math.random()<.15){for(let i=0;i<4;i++)spawnPollution(player.x+rand(300,700));toast('GHOST NET DRIFTING IN',false);}
+      else spawnPollution();
     }
   }
+  animalTimer--;if(animalTimer<=0&&animals.filter(a=>a.state==='trapped').length<2){animalTimer=rand(500,780);spawnAnimal();}
+}
 
-  let tGlobal = 0;
-  let lastTime = performance.now();
-  function loop(now){
-    const dt = Math.min(0.05,(now-lastTime)/1000);
-    lastTime = now;
-    tGlobal += dt;
+// ================= CAMERA =================
+const cam={x:0,tx:0};
+function updateCam(){cam.tx=clamp(player.x-W/2,0,WORLD_W-W);cam.x+=(cam.tx-cam.x)*.08;}
 
-    update(dt);
-    drawWater(tGlobal);
-    for(const it of items) drawItem(it);
-    drawBoat();
-    drawPops();
-
-    requestAnimationFrame(loop);
-  }
-  requestAnimationFrame(loop);
-
-  // ---- Input ----
-  window.addEventListener('keydown', e=>{
-    keys[e.key] = true;
-    if((e.key === 'p' || e.key === 'P') && (state==='playing'||state==='paused')){
-      togglePause();
-    }
+// ================= RENDER HELPERS =================
+function healthT(){return state.oceanHealth/100;}
+function bgGradient(){const h=healthT();const g=ctx.createLinearGradient(0,0,0,H);
+  g.addColorStop(0,`rgb(${18+38*h},${58+92*h},${86+72*h})`);g.addColorStop(1,`rgb(${3+9*h},${16+38*h},${30+42*h})`);
+  ctx.fillStyle=g;ctx.fillRect(0,0,W,H);}
+function drawCaustics(){ctx.save();ctx.globalAlpha=.05+.05*healthT();
+  for(let i=0;i<4;i++){const rx=((i*260-cam.x*.15+state.t*0.4)%(W+320))-160;ctx.fillStyle='#eafcff';
+    ctx.beginPath();ctx.moveTo(rx,0);ctx.lineTo(rx+90,0);ctx.lineTo(rx-50,H);ctx.lineTo(rx-150,H);ctx.closePath();ctx.fill();}
+  ctx.restore();}
+function drawFar(){ctx.save();ctx.translate(-cam.x*.25,0);ctx.fillStyle='rgba(10,42,58,.65)';
+  farRocks.forEach(r=>{if(r.x-cam.x*.25<-260||r.x-cam.x*.25>W+260)return;ctx.beginPath();ctx.ellipse(r.x,H-r.h/2,r.w/2,r.h/2,0,0,7);ctx.fill();});ctx.restore();}
+function drawMid(){ctx.save();ctx.translate(-cam.x*.55,0);const h=healthT();
+  midCoral.forEach(c=>{if(c.x-cam.x*.55<-100||c.x-cam.x*.55>W+100)return;
+    ctx.fillStyle=`hsla(${c.hue},${35+50*h}%,${22+26*h}%,.85)`;
+    ctx.beginPath();ctx.ellipse(c.x,H-c.size*.55,c.size*.5,c.size*.75,0,0,7);ctx.fill();
+    ctx.fillStyle=`hsla(${c.hue+20},${30+40*h}%,${30+20*h}%,.7)`;
+    for(let i=-1;i<=1;i++){ctx.beginPath();ctx.ellipse(c.x+i*c.size*.3,H-c.size*.9,c.size*.18,c.size*.3,0,0,7);ctx.fill();}
   });
-  window.addEventListener('keyup', e=>{ keys[e.key] = false; });
+  seaweed.forEach(s=>{if(s.x-cam.x*.55<-40||s.x-cam.x*.55>W+40)return;
+    ctx.strokeStyle=`hsla(${s.hue},${40+35*h}%,${18+22*h}%,.9)`;ctx.lineWidth=6;ctx.beginPath();ctx.moveTo(s.x,H);
+    const sway=Math.sin(state.t*.02+s.ph)*16;ctx.quadraticCurveTo(s.x+sway,H-s.h/2,s.x+sway*1.3,H-s.h);ctx.stroke();});
+  ctx.restore();}
+function drawFish(){ctx.save();ctx.translate(-cam.x*.85,0);const h=healthT();
+  const count=Math.round(fishSchool.length*(0.25+0.75*h));
+  for(let i=0;i<count;i++){const f=fishSchool[i];f.a+=.02*f.sp;f.x+=Math.cos(f.a)*.6;f.y+=Math.sin(f.a*1.3)*.4;
+    if(f.x<-30)f.x=WORLD_W+30;if(f.x>WORLD_W+30)f.x=-30;
+    if(f.x-cam.x*.85<-40||f.x-cam.x*.85>W+40)continue;
+    const g=ctx.createLinearGradient(f.x-8,f.y,f.x+8,f.y);g.addColorStop(0,'rgba(150,200,255,.8)');g.addColorStop(1,'rgba(220,240,255,.5)');
+    ctx.fillStyle=g;ctx.save();ctx.translate(f.x,f.y);ctx.rotate(f.a);ctx.beginPath();ctx.ellipse(0,0,8,3.5,0,0,7);ctx.fill();
+    ctx.beginPath();ctx.moveTo(-8,0);ctx.lineTo(-13,-3);ctx.lineTo(-13,3);ctx.closePath();ctx.fill();ctx.restore();}
+  jellies.forEach(j=>{if(j.x-cam.x*.85<-40||j.x-cam.x*.85>W+40)return;j.ph+=.02;const jy=j.y+Math.sin(j.ph)*6;
+    ctx.fillStyle='rgba(255,200,240,.3)';ctx.beginPath();ctx.ellipse(j.x,jy,12,16,0,0,7);ctx.fill();
+    for(let k=-2;k<=2;k++){ctx.strokeStyle='rgba(255,200,240,.25)';ctx.beginPath();ctx.moveTo(j.x+k*4,jy+14);ctx.lineTo(j.x+k*4+Math.sin(j.ph+k)*4,jy+34);ctx.stroke();}});
+  ctx.restore();}
+function drawPlayer(){ctx.save();ctx.translate(player.x-cam.x,player.y);ctx.scale(player.facing,1);
+  const lowOxy=state.oxygen<30;
+  player.anim+=lowOxy?0.09:0.15;const kick=Math.sin(player.anim)*6;
+  // tank
+  ctx.fillStyle='#8fa0a8';ctx.fillRect(-19,-9,8,16);ctx.fillStyle='#6b7b82';ctx.fillRect(-19,-9,3,16);
+  // body/wetsuit
+  const g=ctx.createLinearGradient(-16,-10,16,10);g.addColorStop(0,'#0e3a4a');g.addColorStop(1,'#2b8aa8');
+  ctx.fillStyle=g;ctx.beginPath();ctx.ellipse(0,0,16,10,0,0,7);ctx.fill();
+  ctx.strokeStyle='rgba(255,255,255,.18)';ctx.lineWidth=1;ctx.beginPath();ctx.ellipse(2,-3,10,4,0,0,7);ctx.stroke();
+  // fins
+  ctx.strokeStyle='#0e3a4a';ctx.lineWidth=6;ctx.lineCap='round';
+  ctx.beginPath();ctx.moveTo(-14,4);ctx.lineTo(-24,4+kick);ctx.stroke();
+  ctx.fillStyle='#f2b400';ctx.beginPath();ctx.moveTo(-22,3+kick);ctx.lineTo(-32,2+kick);ctx.lineTo(-24,8+kick);ctx.closePath();ctx.fill();
+  // arm + tool
+  const toolNames=['grabber','cutter','suction'];
+  ctx.strokeStyle='#12495e';ctx.lineWidth=5;ctx.lineCap='round';
+  const armSwing=Math.sin(player.anim*.7)*2;
+  ctx.beginPath();ctx.moveTo(10,-2);ctx.lineTo(24,-6+armSwing);ctx.stroke();
+  ctx.save();ctx.translate(24,-6+armSwing);
+  if(state.toolIdx===0){ctx.strokeStyle='#dfe8ea';ctx.lineWidth=2.4;ctx.beginPath();ctx.moveTo(-3,-4);ctx.lineTo(4,4);ctx.moveTo(3,-4);ctx.lineTo(-4,4);ctx.stroke();}
+  else if(state.toolIdx===1){ctx.strokeStyle='#dfe8ea';ctx.lineWidth=2;ctx.beginPath();ctx.arc(-2,-2,3,0,7);ctx.stroke();ctx.beginPath();ctx.arc(-2,3,3,0,7);ctx.stroke();}
+  else{ctx.fillStyle='#8fd8ff';ctx.beginPath();ctx.arc(0,0,4,0,7);ctx.fill();}
+  ctx.restore();
+  // glove
+  ctx.fillStyle='#12495e';ctx.beginPath();ctx.arc(24,-6+armSwing,3,0,7);ctx.fill();
+  // head + mask
+  ctx.fillStyle='#2b7d99';ctx.beginPath();ctx.arc(10,-6,7.5,0,7);ctx.fill();
+  ctx.fillStyle='rgba(255,255,255,.5)';ctx.beginPath();ctx.ellipse(13,-6,3.4,4,0,0,7);ctx.fill();
+  ctx.strokeStyle='#0e3a4a';ctx.lineWidth=1.4;ctx.beginPath();ctx.arc(10,-6,7.5,0,7);ctx.stroke();
+  // regulator hose + bubbles
+  ctx.strokeStyle='#12495e';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(6,-3);ctx.quadraticCurveTo(-4,2,-10,-4);ctx.stroke();
+  const bubbleChance=lowOxy?0.4:0.22;
+  if(Math.random()<bubbleChance)particles.push(new Particle(player.x-14*player.facing,player.y-10,'bubble'));
+  ctx.restore();}
+function drawForeground(){ctx.save();ctx.translate(-cam.x*1.15,0);ctx.fillStyle='rgba(6,25,32,.85)';
+  for(let i=0;i<Math.ceil(WORLD_W/200)+1;i++){const x=i*200-40;if(x-cam.x*1.15<-260||x-cam.x*1.15>W+260)continue;
+    ctx.beginPath();ctx.moveTo(x,H);ctx.quadraticCurveTo(x+Math.sin(state.t*.02+i)*18,H-90,x+10,H-155);
+    ctx.lineTo(x+30,H-145);ctx.quadraticCurveTo(x+20+Math.sin(state.t*.02+i)*18,H-80,x+40,H);ctx.closePath();ctx.fill();}
+  ctx.restore();}
+function vignette(){const g=ctx.createRadialGradient(W/2,H/2,H*.32,W/2,H/2,H*.78);g.addColorStop(0,'rgba(0,0,0,0)');g.addColorStop(1,`rgba(0,0,0,${.42-.1*healthT()})`);ctx.fillStyle=g;ctx.fillRect(0,0,W,H);}
 
-  function clientToLocalX(clientX){
-    const rect = gameArea.getBoundingClientRect();
-    return (clientX - rect.left) / rect.width;
+// ================= INTERACTION =================
+function useTool(){
+  const tool=state.toolIdx;
+  let acted=false;
+  const target=pollutionItems.find(p=>!p.collected&&d2(player.x,player.y,p.x,p.y)<42);
+  if(target){acted=true;
+    if(KIND_TOOL[target.kind]===tool){target.collected=true;state.oceanHealth=clamp(state.oceanHealth+2.5,0,100);addScore(20);
+      for(let i=0;i<8;i++)particles.push(new Particle(target.x,target.y,'plankton'));}
+    else{toast(state.tools[tool==='net'?1:tool]+' — '+['GRABBER','NET CUTTER','SUCTION'][KIND_TOOL[target.kind]]+' REQUIRED',true);state.combo=0;document.getElementById('combo').style.opacity=0;}
   }
-  gameArea.addEventListener('mousedown', e=>{ dragTargetX = clientToLocalX(e.clientX); });
-  window.addEventListener('mousemove', e=>{ if(dragTargetX!==null) dragTargetX = clientToLocalX(e.clientX); });
-  window.addEventListener('mouseup', ()=>{ dragTargetX = null; });
-  gameArea.addEventListener('touchstart', e=>{ dragTargetX = clientToLocalX(e.touches[0].clientX); }, {passive:true});
-  gameArea.addEventListener('touchmove', e=>{ dragTargetX = clientToLocalX(e.touches[0].clientX); }, {passive:true});
-  gameArea.addEventListener('touchend', ()=>{ dragTargetX = null; });
-
-  function togglePause(){
-    if(state === 'playing'){
-      state = 'paused';
-      overlayTitle.textContent = 'Paused';
-      overlayText.textContent = 'Take a breath. The ocean can wait a moment.';
-      startBtn.textContent = 'Resume';
-      overlay.classList.remove('hidden');
-    } else if(state === 'paused'){
-      state = 'playing';
-      overlay.classList.add('hidden');
-    }
+  const animal=animals.find(a=>a.state==='trapped'&&d2(player.x,player.y,a.x,a.y)<75);
+  if(animal){acted=true;
+    if(tool===1){animal.cut();}
+    else{toast('NET CUTTER REQUIRED',true);state.combo=0;document.getElementById('combo').style.opacity=0;}
   }
+}
 
-  startBtn.addEventListener('click', ()=>{
-    if(state === 'idle' || state === 'gameover'){
-      resetGame();
-      state = 'playing';
-      overlay.classList.add('hidden');
-    } else if(state === 'levelup'){
-      state = 'playing';
-      overlay.classList.add('hidden');
-    } else if(state === 'paused'){
-      state = 'playing';
-      overlay.classList.add('hidden');
+// ================= UPDATE / OBJECTIVE =================
+function updateObjective(){
+  if(state.emergency){objective('⚠ NO OXYGEN — RETURN TO THE SURFACE NOW');return;}
+  if(state.oxygen<15){objective('⚠ RETURN TO THE SURFACE');return;}
+  if(state.oxygen<30){objective('⚠ OXYGEN LOW — find air');return;}
+  const trapped=animals.find(a=>a.state==='trapped');
+  if(trapped)objective(trapped.kind==='turtle'?'A turtle is trapped — use the Net Cutter.':trapped.kind==='dolphin'?'Free the dolphin from the ghost net.':'The seal is tangled — cut it loose.');
+  else if(pollutionItems.some(p=>!p.collected&&d2(player.x,player.y,p.x,p.y)<260))objective('Clean the pollution nearby.');
+  else objective('Search the reef for pollution and animals in distress.');
+}
+
+function update(){
+  state.t++;
+  if(!state.paused){
+    state.elapsed+=1/60;state.timeLeft=Math.max(0,RUN_SECONDS-state.elapsed);
+    const speed=2.6;let dx=0,dy=0;
+    if(state.keys['a']||state.keys['arrowleft']){dx=-1;player.facing=-1;}
+    if(state.keys['d']||state.keys['arrowright']){dx=1;player.facing=1;}
+    if(state.keys['w']||state.keys['arrowup'])dy=-1;
+    if(state.keys['s']||state.keys['arrowdown'])dy=1;
+    const lowSpeedMul=state.oxygen<20?0.6:state.oxygen<40?0.82:1;
+    player.x=clamp(player.x+dx*speed*lowSpeedMul,20,WORLD_W-20);
+    player.y=clamp(player.y+dy*speed*lowSpeedMul,SURFACE_Y-30,H-60);
+
+    const inSurface=player.y<SURFACE_Y+40;
+    const nearStation=oxyStations.find(s=>d2(player.x,player.y,s.x,s.y)<70);
+
+    if(!state.emergency){
+      if(inSurface||(nearStation&&state.keys['e'])){
+        state.oxygen=clamp(state.oxygen+0.28,0,100);
+      } else {
+        const depthFactor=1+clamp((player.y-140)/(H-140),0,1)*0.35; // deeper = slightly faster drain
+        state.oxygen=clamp(state.oxygen-0.012*depthFactor,0,100);
+      }
+      if(state.oxygen<=0){
+        state.emergency=true;state.graceLeft=GRACE_SECONDS;
+        document.getElementById('emergency').classList.remove('hidden');
+      }
+    } else {
+      // emergency grace period — heavy movement penalty, countdown
+      if(inSurface||nearStation){
+        state.emergency=false;state.oxygen=18;
+        document.getElementById('emergency').classList.add('hidden');
+        toast('EMERGENCY OXYGEN RESTORED',false);
+      } else {
+        state.graceLeft-=1/60;
+        document.getElementById('emergencyCount').textContent=Math.max(0,Math.ceil(state.graceLeft));
+        if(state.graceLeft<=0){diveFailed();return;}
+      }
     }
-  });
+    if(state.keys['e']){useTool();state.keys['e']=false;}
 
-  updateHUD();
-})();
+    const oxyPanel=document.getElementById('hud-left');
+    oxyPanel.classList.toggle('oxy-warn',state.oxygen<30&&!state.emergency);
+    document.getElementById('oxyLabel').textContent=state.oxygen<15?'⚠ LOW OXYGEN':state.oxygen<30?'⚠ Oxygen':'Oxygen';
+
+    updateCam();spawnAmbient();updateSpawner();
+    particles=particles.filter(p=>{p.update();return p.alive();});
+    floatTexts.forEach(f=>f.age++);floatTexts=floatTexts.filter(f=>f.age<60);
+    animals.forEach(a=>a.update());animals=animals.filter(a=>!a.dead());
+
+    // ocean health drifts down if pollution accumulates uncleaned
+    const activePollution=pollutionItems.filter(p=>!p.collected).length;
+    if(activePollution>16)state.oceanHealth=clamp(state.oceanHealth-0.006*(activePollution-16),0,100);
+
+    if(inSurface&&!player._wasSurfaced&&state.oxygen<98){toast('OXYGEN RESTORED',false);}
+    player._wasSurfaced=inSurface;
+
+    if(state.comboT>0){state.comboT--;if(state.comboT===0)document.getElementById('combo').style.opacity=0;}
+    updateObjective();
+
+    document.getElementById('oxyBar').style.width=state.oxygen+'%';
+    document.getElementById('healthBar').style.width=state.oceanHealth+'%';
+    document.getElementById('healthVal').textContent=Math.round(state.oceanHealth)+'%';
+    document.getElementById('pollutionVal').textContent=pollutionItems.filter(p=>p.collected).length;
+    document.getElementById('scoreVal').textContent=state.score.toLocaleString();
+    const m=Math.floor(state.timeLeft/60),s=Math.floor(state.timeLeft%60);
+    document.getElementById('timeVal').textContent=m+':'+String(s).padStart(2,'0');
+
+    if(state.timeLeft<=0&&!state.ended)endRun();
+  }
+}
+
+function drawSurface(){
+  // bright oxygen band at the top of the world
+  const g=ctx.createLinearGradient(0,0,0,SURFACE_Y+60);
+  g.addColorStop(0,`rgba(200,240,255,${.35+.1*Math.sin(state.t*.01)})`);
+  g.addColorStop(1,'rgba(200,240,255,0)');
+  ctx.fillStyle=g;ctx.fillRect(0,0,W,SURFACE_Y+60);
+  if(player.y<SURFACE_Y+40){
+    ctx.save();ctx.globalAlpha=.15;ctx.fillStyle='#eafcff';ctx.font='11px sans-serif';ctx.textAlign='center';
+    ctx.fillText('↑ SURFACE — OXYGEN ZONE',W/2,30);ctx.textAlign='left';ctx.restore();
+  }
+}
+function render(){
+  bgGradient();drawSurface();drawFar();drawCaustics();drawMid();drawFish();
+  oxyStations.forEach(s=>s.draw(s.x-cam.x,s.y));
+  pollutionItems.forEach(p=>{ctx.save();ctx.translate(-cam.x,0);p.draw();ctx.restore();});
+  animals.forEach(a=>a.draw(a.x-cam.x,a.y));
+  drawPlayer();
+  particles.forEach(p=>p.draw());
+  floatTexts.forEach(f=>{ctx.save();ctx.globalAlpha=1-f.age/60;ctx.fillStyle=f.color;ctx.font='bold 13px sans-serif';ctx.textAlign='center';
+    ctx.fillText(f.text,f.x-cam.x,f.y-f.age*0.6);ctx.textAlign='left';ctx.restore();});
+  drawRescuePrompt();
+  drawForeground();vignette();
+}
+function drawRescuePrompt(){
+  const a=animals.find(x=>x.state==='trapped'&&d2(player.x,player.y,x.x,x.y)<90);
+  if(!a)return;
+  const sx=a.x-cam.x,sy=a.y-58;
+  ctx.save();ctx.globalAlpha=.9;
+  ctx.fillStyle='rgba(6,26,36,.75)';ctx.strokeStyle='rgba(120,220,255,.4)';ctx.lineWidth=1;
+  const label=(a.kind==='turtle'?'DISTRESSED TURTLE':a.kind==='dolphin'?'DISTRESSED DOLPHIN':'DISTRESSED SEAL');
+  ctx.font='11px sans-serif';const w=Math.max(ctx.measureText(label).width,120)+20;
+  ctx.beginPath();ctx.roundRect?ctx.roundRect(sx-w/2,sy-28,w,40,6):ctx.rect(sx-w/2,sy-28,w,40);ctx.fill();ctx.stroke();
+  ctx.fillStyle='#dff8ff';ctx.textAlign='center';ctx.fillText(label,sx,sy-12);
+  ctx.fillStyle='#8fe6ff';ctx.fillText('Net Cutter required · [E] RESCUE',sx,sy+2);
+  ctx.textAlign='left';ctx.restore();
+}
+
+function loop(){if(state.running){update();render();}requestAnimationFrame(loop);}
+
+// ================= PAUSE / END / RESET =================
+function togglePause(){state.paused=!state.paused;document.getElementById('pauseMenu').classList.toggle('hidden',!state.paused);}
+document.getElementById('resumeBtn').onclick=togglePause;
+document.getElementById('restartBtn').onclick=()=>{togglePause();resetRun();startRun();};
+document.getElementById('menuBtn').onclick=()=>{togglePause();state.running=false;['hud-left','hud-center','hud-right','hud-bottom'].forEach(id=>document.getElementById(id).classList.add('hidden'));document.getElementById('overlay').classList.remove('hidden');};
+
+function resetRun(){
+  state.elapsed=0;state.timeLeft=RUN_SECONDS;state.oceanHealth=18;state.oxygen=100;state.score=0;state.rescued=0;state.combo=0;state.ended=false;
+  state.emergency=false;state.graceLeft=0;state.died=false;
+  document.getElementById('emergency').classList.add('hidden');
+  document.getElementById('hud-left').classList.remove('oxy-warn');
+  document.getElementById('rescuedVal').textContent=0;
+  pollutionItems=[];animals=[];particles=[];floatTexts=[];player.x=220;player.y=300;player._wasSurfaced=false;
+  seedStations();
+  for(let i=0;i<10;i++)spawnPollution(rand(0,900));
+  spawnTimer=0;animalTimer=340;
+}
+function startRun(){
+  document.getElementById('overlay').classList.add('hidden');
+  document.getElementById('setupScreen').classList.add('hidden');
+  ['hud-left','hud-center','hud-right','hud-bottom'].forEach(id=>document.getElementById(id).classList.remove('hidden'));
+  state.running=true;state.paused=false;
+}
+function statsBlock(){
+  return `Time Survived: <b style="color:#8fffcf">${Math.floor(state.elapsed/60)}:${String(Math.floor(state.elapsed%60)).padStart(2,'0')}</b><br>
+    Animals Rescued: <b style="color:#8fffcf">${state.rescued}</b><br>
+    Pollution Removed: <b style="color:#8fffcf">${pollutionItems.filter(p=>p.collected).length}</b><br>
+    Ocean Health: <b style="color:#8fffcf">${Math.round(state.oceanHealth)}%</b><br>
+    Score: <b style="color:#ffe08a">${state.score.toLocaleString()}</b>`;
+}
+function endRun(){
+  state.ended=true;state.running=false;
+  document.getElementById('overlay').innerHTML=`<h1>RESCUE SESSION COMPLETE</h1>
+    <h2 style="letter-spacing:3px">REEF RECOVERY</h2>
+    <div style="font-size:13px;line-height:2;color:#cdeef7;margin-bottom:16px">${statsBlock()}</div>
+    <button class="btn" id="againBtn">PLAY AGAIN</button>
+    <button class="btn" id="menuBtn2">MAIN MENU</button>`;
+  document.getElementById('overlay').classList.remove('hidden');
+  document.getElementById('againBtn').onclick=()=>{document.getElementById('overlay').classList.add('hidden');document.getElementById('setupScreen').classList.remove('hidden');};
+  document.getElementById('menuBtn2').onclick=()=>{location.reload();};
+}
+function diveFailed(){
+  state.ended=true;state.running=false;state.died=true;
+  document.getElementById('emergency').classList.add('hidden');
+  ['hud-left','hud-center','hud-right','hud-bottom'].forEach(id=>document.getElementById(id).classList.add('hidden'));
+  document.getElementById('overlay').innerHTML=`<h1 style="background:linear-gradient(90deg,#ff8a8a,#ffce8a);-webkit-background-clip:text;background-clip:text;color:transparent">DIVE FAILED</h1>
+    <h2 style="letter-spacing:3px;color:#ffb3b3">Oxygen depleted</h2>
+    <div style="font-size:13px;line-height:2;color:#cdeef7;margin-bottom:16px">${statsBlock()}</div>
+    <button class="btn" id="tryAgainBtn">TRY AGAIN</button>
+    <button class="btn" id="changeTimeBtn">CHANGE SESSION TIME</button>`;
+  document.getElementById('overlay').classList.remove('hidden');
+  document.getElementById('tryAgainBtn').onclick=()=>{resetRun();startRun();};
+  document.getElementById('changeTimeBtn').onclick=()=>{document.getElementById('overlay').classList.add('hidden');document.getElementById('setupScreen').classList.remove('hidden');};
+}
+
+document.getElementById('playBtn').onclick=()=>{document.getElementById('overlay').classList.add('hidden');document.getElementById('setupScreen').classList.remove('hidden');};
+document.getElementById('howBtn').onclick=()=>document.getElementById('howPanel').classList.toggle('hidden');
+document.querySelectorAll('.timeBtn').forEach(b=>b.onclick=()=>{RUN_SECONDS=parseInt(b.dataset.min)*60;resetRun();startRun();});
+document.getElementById('startRescueBtn').onclick=()=>{
+  const mins=clamp(parseInt(document.getElementById('customMin').value)||10,1,60);
+  RUN_SECONDS=mins*60;resetRun();startRun();
+};
+
+render();loop();
 </script>
 </body>
 </html>
